@@ -2,6 +2,5 @@
   base = "web"
   command = "npm run build"
 
-[plugins]
-  # Explicitly enable the Next.js Runtime
-  - package = "@netlify/plugin-nextjs"
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
