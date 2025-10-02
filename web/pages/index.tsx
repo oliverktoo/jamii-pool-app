@@ -16,23 +16,31 @@ type Row = {
 export default function Home() {
   const [rows, setRows] = useState<Row[]>([]);
 
+  const load = async () => {
+    const { data } = await supabase.from('vw_tables_live').select('*');
+    setRows((data as Row[]) ?? []);
+  };
+
+  // initial load
+  useEffect(() => { load(); }, []);
+
+  // realtime: reload when matches change
   useEffect(() => {
-    const load = async () => {
-      const { data, error } = await supabase.from('vw_tables_live').select('*');
-      if (!error && data) setRows(data as Row[]);
-    };
-    load();
-    const id = setInterval(load, 3000);
-    return () => clearInterval(id);
+    const channel = supabase
+      .channel('matches-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => {
+        load();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   return (
     <main style={{ padding: 24, fontFamily: 'system-ui' }}>
       <h1>Jamii Pool — Tables</h1>
       <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-        <thead>
-          <tr><th>#</th><th>Venue</th><th>Home</th><th>Score</th><th>Away</th><th>Status</th></tr>
-        </thead>
+        <thead><tr><th>#</th><th>Venue</th><th>Home</th><th>Score</th><th>Away</th><th>Status</th></tr></thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.table_id} style={{ borderTop: '1px solid #ddd' }}>
@@ -49,18 +57,3 @@ export default function Home() {
     </main>
   );
 }
-
-  // --- Realtime subscribe to matches updates ---
-  useEffect(() => {
-    const channel = supabase
-      .channel('matches-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => {
-        // re-load on any change
-        (async () => {
-          const { data } = await supabase.from('vw_tables_live').select('*');
-          setRows((data as any) ?? []);
-        })();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, []);
