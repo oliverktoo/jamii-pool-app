@@ -13,6 +13,8 @@ type Row = {
   away_name: string | null;
 };
 
+import BuildBadge from '../components/BuildBadge';
+
 export default function Home() {
   const [rows, setRows] = useState<Row[]>([]);
 
@@ -51,9 +53,10 @@ export default function Home() {
               <td>{r.away_name ?? 'TBD'}</td>
               <td>{r.status ?? 'idle'}</td>
             </tr>
-          ))}
+          ))}\r\n\r\n// badge at the end\r\nexport function PageFooterBadge(){ return <BuildBadge/> }\r\n
         </tbody>
       </table>
     </main>
   );
-}
+}\r\n\r\n// badge at the end\r\nexport function PageFooterBadge(){ return <BuildBadge/> }\r\n
+
