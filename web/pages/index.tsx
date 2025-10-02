@@ -49,3 +49,18 @@ export default function Home() {
     </main>
   );
 }
+
+  // --- Realtime subscribe to matches updates ---
+  useEffect(() => {
+    const channel = supabase
+      .channel('matches-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => {
+        // re-load on any change
+        (async () => {
+          const { data } = await supabase.from('vw_tables_live').select('*');
+          setRows((data as any) ?? []);
+        })();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
