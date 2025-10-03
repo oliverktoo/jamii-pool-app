@@ -1,13 +1,11 @@
 [build]
   base    = "web"
   command = "npm run build"
-  publish = "web/out"
+  publish = "out"
 
-# Disable Netlify post-processing (Next.js already optimizes)
 [build.processing]
   skip_processing = true
 
-# Extra safety: explicitly disable each category
 [build.processing.css]
   bundle = false
   minify = false
