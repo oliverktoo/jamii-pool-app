@@ -1,4 +1,23 @@
-[build]
-  base = "web"
+﻿[build]
+  base    = "web"
   command = "npm run build"
-  publish = "out"
+  publish = "web/out"
+
+# Tell Netlify not to “optimize” our build output (Next already did it)
+[build.processing]
+  skip_processing = true
+
+# (Defensive: explicitly disable each category in case skip_processing is ignored)
+[build.processing.css]
+  bundle = false
+  minify = false
+
+[build.processing.js]
+  bundle = false
+  minify = false
+
+[build.processing.images]
+  compress = false
+
+[build.processing.html]
+  pretty_urls = false
