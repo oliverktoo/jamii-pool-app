@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import BuildBadge from '../components/BuildBadge';
 
 type Row = {
   table_id: string;
@@ -13,8 +14,6 @@ type Row = {
   away_name: string | null;
 };
 
-import BuildBadge from '../components/BuildBadge';
-
 export default function Home() {
   const [rows, setRows] = useState<Row[]>([]);
 
@@ -26,7 +25,7 @@ export default function Home() {
   // initial load
   useEffect(() => { load(); }, []);
 
-  // realtime: reload when matches change
+  // realtime reload when matches change
   useEffect(() => {
     const channel = supabase
       .channel('matches-live')
@@ -34,7 +33,6 @@ export default function Home() {
         load();
       })
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, []);
 
@@ -42,7 +40,9 @@ export default function Home() {
     <main style={{ padding: 24, fontFamily: 'system-ui' }}>
       <h1>Jamii Pool — Tables</h1>
       <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-        <thead><tr><th>#</th><th>Venue</th><th>Home</th><th>Score</th><th>Away</th><th>Status</th></tr></thead>
+        <thead>
+          <tr><th>#</th><th>Venue</th><th>Home</th><th>Score</th><th>Away</th><th>Status</th></tr>
+        </thead>
         <tbody>
           {rows.map((r) => (
             <tr key={r.table_id} style={{ borderTop: '1px solid #ddd' }}>
@@ -53,10 +53,11 @@ export default function Home() {
               <td>{r.away_name ?? 'TBD'}</td>
               <td>{r.status ?? 'idle'}</td>
             </tr>
-          ))}\r\n\r\n// badge at the end\r\nexport function PageFooterBadge(){ return <BuildBadge/> }\r\n
+          ))}
         </tbody>
       </table>
+
+      <BuildBadge />
     </main>
   );
-}\r\n\r\n// badge at the end\r\nexport function PageFooterBadge(){ return <BuildBadge/> }\r\n
-
+}
