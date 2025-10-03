@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 type Row = {
@@ -18,6 +18,7 @@ export default function Scorer() {
   const [user, setUser] = useState<any>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [sel, setSel] = useState<string>('');
+  const liveRef = useRef<any>(null);
 
   // auth
   useEffect(() => {
@@ -26,15 +27,20 @@ export default function Scorer() {
     return () => { sub.subscription.unsubscribe(); };
   }, []);
 
-  // load matches (from your view)
   const load = async () => {
-    const { data, error } = await supabase.from('vw_tables_live').select('*');
-    if (!error && data) {
-      setRows(data as Row[]);
-      if (!sel && data.length) setSel((data[0] as any).match_id);
-    }
+    const { data } = await supabase.from('vw_tables_live').select('*');
+    const list = (data as Row[]) ?? [];
+    setRows(list);
+    if (!sel && list.length) setSel((list[0] as any).match_id);
   };
   useEffect(() => { load(); }, []);
+
+  // broadcast channel
+  useEffect(() => {
+    const ch = supabase.channel('jamii-scores').subscribe();
+    liveRef.current = ch;
+    return () => { supabase.removeChannel(ch); };
+  }, []);
 
   const signIn = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -46,7 +52,6 @@ export default function Scorer() {
     if (!user) return alert('Please sign in');
     if (!sel) return;
 
-    // read current score from row state
     const r = rows.find(x => (x as any).match_id === sel);
     if (!r) return;
 
@@ -57,8 +62,12 @@ export default function Scorer() {
       .from('matches')
       .update({ home_score: newHome, away_score: newAway })
       .eq('id', sel);
+
     if (error) { alert(error.message); return; }
-    load(); // refresh
+
+    // tell viewers to reload immediately
+    liveRef.current?.send({ type: 'broadcast', event: 'scores_changed', payload: { match_id: sel } });
+    load();
   };
 
   return (

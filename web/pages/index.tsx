@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import BuildBadge from '../components/BuildBadge';
 
@@ -16,6 +16,7 @@ type Row = {
 
 export default function Home() {
   const [rows, setRows] = useState<Row[]>([]);
+  const liveRef = useRef<any>(null);
 
   const load = async () => {
     const { data } = await supabase.from('vw_tables_live').select('*');
@@ -25,15 +26,19 @@ export default function Home() {
   // initial load
   useEffect(() => { load(); }, []);
 
-  // realtime reload when matches change
+  // real-time via broadcast channel (no DB replication needed)
   useEffect(() => {
-    const channel = supabase
-      .channel('matches-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => {
-        load();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const ch = supabase.channel('jamii-scores');
+    ch.on('broadcast', { event: 'scores_changed' }, () => load());
+    ch.subscribe();
+    liveRef.current = ch;
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
+  // gentle polling fallback (every 5s)
+  useEffect(() => {
+    const id = setInterval(load, 5000);
+    return () => clearInterval(id);
   }, []);
 
   return (
