@@ -1,4 +1,5 @@
-﻿import { DB } from '../../lib/db';
+﻿const ORG_ID = process.env.NEXT_PUBLIC_ORG_ID as string;
+import { DB } from '../../lib/db';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import AdminGuard from '../../components/AdminGuard';
@@ -35,7 +36,7 @@ export default function TablesAdmin() {
       if (error) return alert(error.message);
     } else {
       const { error } = await supabase.from(DB.tables)
-        .insert({ venue_id: venueId, table_no: tableNo });
+        .insert({ org_id: ORG_ID,  venue_id: venueId, table_no: tableNo });
       if (error) return alert(error.message);
     }
     setEditId(null); setVenueId(''); setTableNo(1); load();
@@ -80,5 +81,6 @@ export default function TablesAdmin() {
     </AdminGuard>
   );
 }
+
 
 

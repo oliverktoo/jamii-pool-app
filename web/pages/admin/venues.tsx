@@ -1,4 +1,5 @@
-﻿import { useEffect, useState } from 'react';
+﻿const ORG_ID = process.env.NEXT_PUBLIC_ORG_ID as string;
+import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import AdminGuard from '../../components/AdminGuard';
 import AdminNav from '../../components/AdminNav';
@@ -24,7 +25,7 @@ export default function VenuesAdmin() {
       if (error) return alert(error.message);
     } else {
       const { error } = await supabase.from('venues')
-        .insert({ name, location: location || null });
+        .insert({ org_id: ORG_ID,  name, location: location || null });
       if (error) return alert(error.message);
     }
     setName(''); setLocation(''); setEditId(null); load();
@@ -65,3 +66,4 @@ export default function VenuesAdmin() {
     </AdminGuard>
   );
 }
+
